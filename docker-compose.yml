@@ -1,34 +1,30 @@
-name: Deploy Web UAS to VPS
+version: '3.8'
 
-on:
-  push:
-    branches:
-      - main
+services:
+  my-html-app:
+    image: nginx:alpine
+    container_name: uas-web-container
+    ports:
+      - "80:80"
+    volumes:
+      - .:/usr/share/nginx/html:ro
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  monitoring-tool:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    restart: always
+    depends_on:
+      - my-html-app
 
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v3
-
-      - name: Copy Files to VPS via SSH
-        uses: appleboy/scp-action@master
-        with:
-          host: 103.93.135.75
-          username: ubuntu
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "."
-          target: "/home/ubuntu/uas-project"
-
-      - name: Executing Remote SSH Commands
-        uses: appleboy/ssh-action@master
-        with:
-          host: 103.93.135.75
-          username: ubuntu
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/uas-project
-            sudo docker-compose down
-            sudo docker-compose up -d --build
+volumes:
+  uptime-kuma-data:
