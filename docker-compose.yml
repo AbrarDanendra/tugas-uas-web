@@ -1,0 +1,50 @@
+version: '3.8'
+
+networks:
+  uas_network:
+    driver: bridge
+
+volumes:
+  uptime_kuma_data:
+    driver: local
+
+services:
+   my-html-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: web-uas-html-prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+      - APP_NAME=DevBrar_Web
+    volumes:
+      - .:/usr/share/nginx/html:ro  
+    networks:
+      - uas_network
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  
+  monitoring-tool:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma-uas
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - uas_network
+    restart: always
+    depends_on:
+      - my-html-app
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
