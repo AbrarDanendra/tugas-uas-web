@@ -1,6 +1,30 @@
-script: |
-            cd /home/ubuntu/uas-project
-            sudo docker-compose down --remove-orphans
-            sudo docker stop uas-web-container || true
-            sudo docker rm uas-web-container || true
-            sudo docker-compose up -d --build
+version: '3.8'
+
+services:
+  my-html-app:
+    image: nginx:alpine
+    container_name: uas-web-container
+    ports:
+      - "80:80"
+    volumes:
+      - .:/usr/share/nginx/html:ro
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  monitoring-tool:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    restart: always
+    depends_on:
+      - my-html-app
+
+volumes:
+  uptime-kuma-data:
