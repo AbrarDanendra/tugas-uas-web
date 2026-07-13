@@ -30,5 +30,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/ubuntu/uas-project
-            sudo docker-compose down
+            sudo docker-compose down --remove-orphans
+            sudo docker stop uas-web-container || true
+            sudo docker rm uas-web-container || true
             sudo docker-compose up -d --build
