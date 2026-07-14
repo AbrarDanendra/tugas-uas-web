@@ -1,12 +1,33 @@
-- name: Executing Remote SSH Commands
-        uses: appleboy/ssh-action@master
+name: Deploy via SSH Password (Docker)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Executing remote ssh commands using password
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: 103.93.135.75
           username: ubuntu
-          key: ${{ secrets.VPS_SSH_KEY }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
           script: |
             cd /home/ubuntu/uas-project
+            
+            git config pull.rebase false
+            git fetch --all
+            git reset --hard origin/main
+            
             sudo docker-compose down --volumes --remove-orphans
             sudo docker stop uas-web-container || true
             sudo docker rm -f uas-web-container || true
+            
             sudo docker-compose up -d --build --force-recreate
